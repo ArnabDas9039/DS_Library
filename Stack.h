@@ -15,6 +15,9 @@ public:
     }
 
     V top() const{
+        if(this->empty()){
+            throw std::out_of_range("Stack is empty");
+        }
         return (*this)[this->size() - 1];
     }
 };

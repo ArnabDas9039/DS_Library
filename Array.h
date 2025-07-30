@@ -5,14 +5,6 @@
 template<typename V>
 class Array{
 private:
-    template <typename First, typename... Rest>
-    void initialize(size_t index, First first, Rest... rest){
-        ensure_space();
-        _values[index] = first;
-        initialize(index + 1, rest...);
-    }
-    
-    void initialize(size_t index){}
 
 protected:
     size_t _size = 0, _capacity = 8;
@@ -20,23 +12,27 @@ protected:
 
     void ensure_space(){
         if(_size >= _capacity){
-            _capacity *= 2;
-            _values = (V*)realloc(_values, _capacity * sizeof(V));
+            _capacity = ((_size / 8) + 1) * 8;
+            V* new_values = new V[_capacity];
+            for(size_t i = 0; i < _size; ++i){
+                new_values[i] = std::move(_values[i]);
+            }
+            delete[] _values;
+            _values = new_values;
         }
     }
 
 public:
     Array() : _values(new V[_capacity]){}
 
-    template <typename... Args>
-    Array(Args... args){
-        _size = sizeof...(args);
-        _values = new V[_capacity];
-        initialize(0, args...);
+    Array(size_t size) : _size(size), _capacity(size >= _capacity ? ((size / 8) + 1) * 8 : 8), _values(new V[_capacity]){
+        for(size_t i = 0; i < _size; ++i){
+            _values[i] = V();
+        }
     }
 
     ~Array(){
-        _size = 0;
+        delete[] _values;
     }
 
     size_t size(){ return _size; }
@@ -50,9 +46,6 @@ public:
         if(index < 0 || index >= _size){
             throw std::out_of_range("Index out of bounds");
         }
-        if(index < 0){
-            return *(_values + _size + index);
-        }
         return *(_values + index);
     }
     V& operator[](int index) const{
@@ -62,23 +55,21 @@ public:
         if(index < 0 || index >= _size){
             throw std::out_of_range("Index out of bounds");
         }
-        if(index < 0){
-            return *(_values + _size + index);
-        }
         return *(_values + index);
     }
 
     friend std::ostream& operator<<(std::ostream& os, Array<V>& arr){
-        bool flag = 0;
-        for(auto i : arr){
-            if(!flag){
-                os << "[" << i;
-                flag = 1;
-                continue;
-            }
-            os << ", " << i;
+        if(arr.empty()){
+            os << "[]";
+            return os;
+        }
+        os << "[";
+        for(size_t i = 0; i < arr._size; ++i){
+            os << arr._values[i];
+            if(i < arr._size - 1) os << ", ";
         }
         os << "]";
+        return os;
     }
 
     class Iterator {
@@ -111,8 +102,17 @@ public:
     bool empty() const{ return _size == 0; }
 
     V at(int index) const{ return (*this)[index]; }
-    V front() const{ return (*this)[0]; }
-    V back() const{ return (*this)[_size - 1]; }
+    V front() const{
+        if(empty()){
+            throw std::out_of_range("Array is empty");
+        }
+        return (*this)[0];
+    }
+    V back() const{
+        if(empty()){
+            throw std::out_of_range("Array is empty");
+        }return (*this)[_size - 1];
+    }
 
     void push_back(V value){
         ensure_space();
@@ -129,7 +129,15 @@ public:
     }
 
     void insert(V value, int index){
+        if(index < 0 || index > _size){
+            throw std::out_of_range("Index out of bounds");
+        }
+        ensure_space();
+        for(int i = _size; i > index; --i){
+            _values[i] = _values[i - 1];
+        }
         _values[index] = value;
+        _size++;
     }
 
     void erase(int index){
@@ -139,9 +147,6 @@ public:
         if(index < 0 || index >= _size){
             throw std::out_of_range("Index out of bounds");
         }
-        // if(index < 0){
-        //     index += _size;
-        // }
         for(int i = index; i < _size; i++){
             *(_values + i) = *(_values + i + 1);
         }

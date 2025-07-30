@@ -195,7 +195,7 @@ public:
         if(node == NULL){
             return 0;
         }
-        return 1 + max(getHeight(node->left), getHeight(node->right));
+        return 1 + std::max(getHeight(node->left), getHeight(node->right));
     }
 
     typename Binary_Tree<V>::Leaf* rebalanceTree(typename Binary_Tree<V>::Leaf* node, V value, typename Binary_Tree<V>::Leaf* parent){

@@ -28,7 +28,14 @@ public:
     };
 
     ~Map(){
-        delete[] & buckets;
+        for(size_t i = 0; i < _bucket_count; i++){
+            if(buckets[i] != nullptr){
+                for(Pair<K, V>* pair : *buckets[i]){
+                    delete pair; // Free each Pair
+                }
+                delete buckets[i]; // Free the List
+            }
+        }
     }
 
     size_t size(){ return _size; }
@@ -65,7 +72,7 @@ public:
             ++iter;
             while(bucketIndex < buckets.capacity() && (buckets[bucketIndex] == NULL || iter == buckets[bucketIndex]->end())){
                 bucketIndex++;
-                if(bucketIndex < buckets.capacity()){
+                if(bucketIndex < buckets.capacity() && buckets[bucketIndex] != NULL){
                     iter = buckets[bucketIndex]->begin();
                 }
             }
@@ -125,21 +132,53 @@ public:
         throw std::out_of_range("Key not found");
     }
 
+    void rehash(){
+        size_t old_bucket_count = _bucket_count;
+        _bucket_count *= 2;
+        Array<List<Pair<K, V>*>*> new_buckets(_bucket_count);
+
+        for(size_t i = 0; i < _bucket_count; i++){
+            new_buckets.push_back(new List<Pair<K, V>*>());
+        }
+
+        for(size_t i = 0; i < old_bucket_count; i++){
+            if(buckets[i] != nullptr){
+                for(Pair<K, V>* pair : *buckets[i]){
+                    int index = std::abs(static_cast<int>(std::hash<K>()(pair->first))) % _bucket_count;
+                    new_buckets[index]->push_back(pair);
+                }
+                delete buckets[i];
+            }
+        }
+        buckets = std::move(new_buckets);
+    }
+
+
     void erase(K key){
         int index = Hash(key);
         List<Pair<K, V>*>* bucket = buckets[index];
-        for(auto i : *bucket){
-            if((*i)->first == key){
-                delete* i;
-                bucket->erase(i);
+        for(auto it = bucket->begin(); it != bucket->end(); ++it){
+            if((*it)->first == key){
+                delete* it;
+                bucket->erase(it);
                 _size--;
+                return;
             }
         }
         return;
     }
 
     void clear(){
-
+        for(size_t i = 0; i < _bucket_count; i++){
+            if(buckets[i] != nullptr){
+                for(Pair<K, V>* pair : *buckets[i]){
+                    delete pair;
+                }
+                delete buckets[i];
+                buckets[i] = nullptr;
+            }
+        }
+        _size = 0;
     }
 };
 

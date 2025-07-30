@@ -1,12 +1,14 @@
 // #include<bits/stdc++.h>
 #include<iostream>
 #include<fstream>
+#include<vector>
 #include "Array.h"
 #include "Map.h"
 #include "List.h"
 #include "Stack.h"
 #include "Queue.h"
 #include "Heap.h"
+#include "Graph.h"
 using namespace std;
 
 class Node{
@@ -27,13 +29,13 @@ struct CompareG {
     }
 };
 
-class Graph{
+class graph{
 private:
 public:
     Node* start, * end;
     Map<Node*, List<Node*> > adj;
     // constructor
-    Graph(){
+    graph(){
     }
 
     int graphsize(){
@@ -191,7 +193,9 @@ int main(int argc, char* argv[]){
 
     ifstream file(argv[1]);
     // Initialize Graph
-    Graph maze;
+    // Graph<Node*, int> maze;
+    graph maze;
+    Node* start, * end;
 
     if(!file.is_open()){
         cout << "Couldn't open file" << endl;
@@ -199,10 +203,10 @@ int main(int argc, char* argv[]){
     }
 
     // file to 2D vector
-    Array<Array<char> > data;
+    vector<vector<char> > data;
     string line;
     while(getline(file, line)){
-        Array<char> row;
+        vector<char> row;
         for(int i = 0; line[i] != '\0'; i++){
             row.push_back(line[i]);
         }
@@ -221,60 +225,62 @@ int main(int argc, char* argv[]){
     // Vertex
     for(int i = 0; i < data.size(); i++){
         for(int j = 0; j < data[i].size(); j++){
-            // cout << "At()" << i << ", " << j << endl;
+            cout << "At()" << i << ", " << j << endl;
             if(data[i][j] == 'A' || data[i][j] == ' ' || data[i][j] == 'B'){
-                Node n = { i, j, 0 };
-                maze.createVertex(n);
+                Node* n = new Node{ i, j, 0 };
+                maze.createVertex({ i,j,0 });
                 if(data[i][j] == 'A')
-                    maze.start = maze.getVertex(n);
+                    start = n;
                 if(data[i][j] == 'B')
-                    maze.end = maze.getVertex(n);
+                    end = n;
             }
         }
     }
-    
+
     // Calls to check
-    // cout << maze.graphsize() << endl;
+    cout << maze.graphsize() << endl;
     // maze.display();
 
     // Edges
     for(auto i : maze.adj){
-        Node src = { i.first->x, i.first->y, 0 }, dest;
+        Node src = { i.first->value->x, i.first->value->y, 0 }, dest;
         if(data[src.x + 1][src.y] == ' ' || data[src.x + 1][src.y] == 'B'){
             dest = { src.x + 1, src.y, 0 };
-            maze.adddirection(&src, &dest);
+            // maze.adddirection(&src, &dest);
+            maze.addedges(maze.getVertex(i.first->value), maze.getVertex(&dest), 1);
         }
         if(data[src.x][src.y + 1] == ' ' || data[src.x][src.y + 1] == 'B'){
             dest = { src.x, src.y + 1, 0 };
-            maze.adddirection(&src, &dest);
+            // maze.adddirection(&src, &dest);
+            maze.addedges(maze.getVertex(&src), maze.getVertex(&dest), 1);
         }
         if(data[src.x - 1][src.y] == ' ' || data[src.x - 1][src.y] == 'B'){
             dest = { src.x - 1, src.y, 0 };
-            maze.adddirection(&src, &dest);
+            // maze.adddirection(&src, &dest);
+            maze.addedges(maze.getVertex(&src), maze.getVertex(&dest), 1);
         }
         if(data[src.x][src.y - 1] == ' ' || data[src.x][src.y - 1] == 'B'){
             dest = { src.x, src.y - 1, 0 };
-            maze.adddirection(&src, &dest);
+            // maze.adddirection(&src, &dest);
+            maze.addedges(maze.getVertex(&src), maze.getVertex(&dest), 1);
         }
     }
-    
+
     // Calls to check
     cout << maze.graphsize() << endl;
-    maze.display();
+    // maze.display();
 
     // Heuristic
-    for(auto i : maze.adj){
-        i.first->m = abs(maze.end->x - i.first->x) + abs(maze.end->y - i.first->y);
-    }
+    // for(auto i : maze.adj){
+    //     i.first->m = abs(maze.end->x - i.first->x) + abs(maze.end->y - i.first->y);
+    // }
 
     // solve
+    // for(auto i = maze.dfsbegin(maze.getVertex(start)); i != maze.dfsend(); ++i){
+    //     cout << (*i);
+    // }
     maze.dfs(maze.start);
     cout << endl;
-    maze.bfs(maze.start);
-    cout << endl;
-    maze.gbfs(maze.start);
-    cout << endl;
-    maze.ass(maze.start);
 
     return 0;
 }

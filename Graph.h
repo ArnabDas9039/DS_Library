@@ -5,6 +5,7 @@
 #include "Heap.h"
 #include "List.h"
 #include "Map.h"
+#include "Ordered_Map.h"
 
 #ifndef GRAPH_H
 #define GRAPH_H
@@ -20,7 +21,7 @@ public:
 
         ~Vertex(){}
 
-        friend ostream& operator<<(ostream& os, const Vertex& v){
+        friend std::ostream& operator<<(std::ostream& os, const Vertex& v){
             os << v.value;
         }
 
@@ -43,7 +44,8 @@ public:
         }
     };
 
-    Ordered_Map<Vertex*, List<Edge* >* > adj;
+    // Ordered_Map<Vertex*, List<Edge* >* > adj;
+    Map<Vertex*, List<Edge* >* > adj;
 
     // struct compare_weight{
     //     bool operator()(Edge* a, Edge* b){
@@ -57,22 +59,22 @@ public:
 
     // void display(){
     //     for(auto i : adj){
-    //         cout << i.first->value << " -> ";
+    //         std::cout << i.first->value << " -> ";
     //         for(Edge* j : *i.second){
-    //             cout << "(" << j->src->value << ", " << j->dest->value << ", wt: " << j->weight << ") => ";
+    //             std::cout << "(" << j->src->value << ", " << j->dest->value << ", wt: " << j->weight << ") => ";
     //         }
-    //         cout << endl;
+    //         std::cout << std::endl;
     //     }
     //     return;
     // }
 
-    void createVertex(V val){
+    Vertex* createVertex(V val){
         Vertex* vertex = new Vertex(val);
         List<Edge*>* edges = new List<Edge*>();
 
-        // cout << "Vertex Initialized: " << *vertex << endl;
+        // std::cout << "Vertex Initialized: " << *vertex << std::endl;
         adj.insert(vertex, edges);
-        return;
+        return vertex;
     }
 
     Vertex* getVertex(V val){
@@ -86,20 +88,20 @@ public:
     }
 
     void addedges(Vertex* src, Vertex* dest, W weight){
-        // cout << "At addedges" << endl;
+        // std::cout << "At addedges" << std::endl;
         Edge* e1 = new Edge(src, dest, weight);
         Edge* e2 = new Edge(dest, src, weight);
-        // cout << "Edge initialized: " << e1->src->value << ", " << e1->dest->value << endl;
+        // std::cout << "Edge initialized: " << e1->src->value << ", " << e1->dest->value << std::endl;
         List<Edge*>* edges = adj[src];
         if(edges == NULL){
-            throw out_of_range("Edge not Found");
+            throw std::out_of_range("Edge not Found");
         }
-        // cout << "edge check: " << endl;
+        // std::cout << "edge check: " << std::endl;
         edges->push_back(e1);
 
         edges = adj[dest];
         if(edges == NULL){
-            throw out_of_range("Edge not Found");
+            throw std::out_of_range("Edge not Found");
         }
         edges->push_back(e2);
     }
@@ -107,20 +109,21 @@ public:
     class DFSIterator{
     private:
         Map<Vertex*, bool> visit;
-        Ordered_Map<Vertex*, List<Edge*>*>& adj;
         // Ordered_Map<Vertex*, List<Edge*>*>& adj;
+        Map<Vertex*, List<Edge*>*>& adj;
         Stack<Vertex*> StackFrontier;
         // typename Stack<Vertex*>::Iterator it;
 
         void advanceToValid(){
             while(!StackFrontier.empty() && visit[StackFrontier.top()]){
-                // cout << "Visit is true for: " << StackFrontier.top()->value;
+                // std::cout << "Visit is true for: " << StackFrontier.top()->value;
                 StackFrontier.pop();
             }
         }
 
     public:
-        DFSIterator(Ordered_Map<Vertex*, List<Edge*>*>& a, Vertex* s) : adj(a){
+        // DFSIterator(Ordered_Map<Vertex*, List<Edge*>*>& a, Vertex* s) : adj(a){
+        DFSIterator(Map<Vertex*, List<Edge*>*>& a, Vertex* s) : adj(a){
             StackFrontier.push(s);
             visit[s] = true;
         }
@@ -295,17 +298,17 @@ public:
                 for(auto i : *adj[edge->dest]){
                     if(distance[edge->dest] + i->weight < distance[i->dest]){
                         distance[i->dest] = distance[edge->dest] + i->weight;
-                        // cout << "\n(" << i->src->value << ", " << i->dest->value << ", wt: " << i->weight << ") { ";
+                        // std::cout << "\n(" << i->src->value << ", " << i->dest->value << ", wt: " << i->weight << ") { ";
                         HeapFrontier.push(i);
                     }
                 }
             }
         }
 
-        for(auto i : adj){
-            cout << "(" << distance[i.first] << ") ";
-        }
-        cout << endl;
+        // for(auto i : adj){
+        //     std::cout << "(" << distance[i.first] << ") ";
+        // }
+        // std::cout << std::endl;
         return;
     }
 };
